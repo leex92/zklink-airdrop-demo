@@ -3,7 +3,9 @@ import PointsLeaderboard from '@/components/PointsLeaderboard'
 import ReferralList from '@/components/ReferralList'
 import { Button, Tab, Tabs } from '@nextui-org/react'
 import styled from 'styled-components'
-
+import abi from '@/abi/abi.json';
+import { ethers } from 'ethers';
+import { useEffect, useState } from 'react'
 const BridgeBox = styled.div`
     .left {
         min-width: 460px;
@@ -39,6 +41,48 @@ const ProgressBar = styled.div`
 `
 
 export default function Bridge() {
+    const [contract, setContract] = useState<any>(null);
+    async function initContract() {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+
+        const contractInstance = new ethers.Contract('CONTRACT_ADDRESS', abi, signer);
+        
+        setContract(contractInstance);
+    }
+
+    useEffect(() => {
+
+        initContract();
+    }, []);
+
+    // 使用合约
+    useEffect(() => {
+        if (contract) {
+            getL2TransactionBaseCost();
+        }
+    }, [contract]);
+
+    async function getL2TransactionBaseCost() {
+        const gasPrice = ''; // 前端填入 gasPrice
+        const l2GasLimit = ''; // 前端填入 l2GasLimit
+        const l2GasPerPubdataByteLimit = '' // 前端l2GasPerPubdataByteLimit
+
+        const baseCost = await contract.l2TransactionBaseCost(gasPrice, l2GasLimit, l2GasPerPubdataByteLimit);
+        /**
+         *  address _contractL2,
+        uint256 _l2Value,
+        bytes calldata _calldata,
+        uint256 _l2GasLimit,
+        uint256 _l2GasPerPubdataByteLimit,
+        bytes[] calldata _factoryDeps,
+        address _refundRecipient
+         */
+        // const result2 = await contract.requestL2Transaction('_contractL2', '_l2Value', '_calldata', '_l2GasLimit', '_l2GasPerPubdataByteLimit', '_factoryDeps', '_refundRecipient');
+        console.log('The base cost is: ', baseCost.toString());
+    }
     return (
         <>
             <BridgeBox className='flex py-8'>
